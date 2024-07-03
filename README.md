@@ -65,7 +65,10 @@ The goal of this project is to provide a robust and efficient workflow for proce
 
     ```bash
    flask run
+7. **open url in local browser:**
 
+    <!-- ```bash -->
+   http://127.0.0.1:5000
 ## Data Acquisition
 
 ### Landing Area Setup:
@@ -146,4 +149,4 @@ Iterate based on user interaction and requirements.
 
 
 ### CONTRIBUTION:
-## Yogesh Mapari  patilmapari@gmail.com
+### Yogesh Mapari  patilmapari@gmail.com
