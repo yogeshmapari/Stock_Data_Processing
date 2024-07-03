@@ -149,4 +149,7 @@ Iterate based on user interaction and requirements.
 
 
 ### CONTRIBUTION:
-### Yogesh Mapari  patilmapari@gmail.com
+ For contributions, feedback, or issues, please contact Yogesh Mapari at patilmapari@gmail.com.
+
+ ### Blog :
+ https://medium.com/@patilmapari/stock-data-processing-workflow-5426d1df9a33
