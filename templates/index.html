@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Performance Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .stock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .stock-card {
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            color: #fff;
+            transition: background-color 0.3s ease;
+        }
+        .positive {
+            background-color: #28a745;
+        }
+        .negative {
+            background-color: #dc3545;
+        }
+        .neutral {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Performance Dashboard</h1>
+        <div class="stock-grid" id="stock-grid">
+            <!-- Stock cards will be dynamically added here -->
+        </div>
+    </div>
+
+    <script>
+        // Dummy data (replace with actual data from the database)
+        const stocks = [
+            { symbol: 'AAPL', name: 'Apple Inc.', dailyChange: 1.2 },
+            { symbol: 'GOOGL', name: 'Alphabet Inc.', dailyChange: -0.5 },
+            { symbol: 'MSFT', name: 'Microsoft Corporation', dailyChange: 0.0 },
+            { symbol: 'AMZN', name: 'Amazon.com Inc.', dailyChange: 2.3 },
+            { symbol: 'FB', name: 'Meta Platforms Inc.', dailyChange: -1.1 }
+        ];
+
+        // Function to create and append stock cards to the grid
+        function renderStockGrid() {
+            const stockGrid = document.getElementById('stock-grid');
+
+            stocks.forEach(stock => {
+                const card = document.createElement('div');
+                card.classList.add('stock-card');
+
+                // Determine color based on daily change
+                if (stock.dailyChange > 0) {
+                    card.classList.add('positive');
+                } else if (stock.dailyChange < 0) {
+                    card.classList.add('negative');
+                } else {
+                    card.classList.add('neutral');
+                }
+
+                card.innerHTML = `
+                    <h2>${stock.symbol}</h2>
+                    <p>${stock.name}</p>
+                    <p>${stock.dailyChange}%</p>
+                `;
+
+                stockGrid.appendChild(card);
+            });
+        }
+
+        // Render initial stock grid
+        renderStockGrid();
+    </script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+drop  database IF  EXISTS raw_layer;
+drop  database IF  EXISTS int_layer;
+create database raw_layer;
+create database int_layer;
+
+ CREATE TABLE IF NOT EXISTS raw_layer.meta_load_status (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    table_name VARCHAR(255) NOT NULL,
+    load_status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- **************************************************************************
+
+-- create some store procedure for tranformation as below
+
+drop  PROCEDURE raw_layer.CalculateEMA12;
+DELIMITER //
+
+CREATE PROCEDURE raw_layer.CalculateEMA12(IN table_name VARCHAR(255))
+BEGIN
+    DECLARE previous_ema DOUBLE DEFAULT 0;
+    DECLARE alpha DOUBLE DEFAULT 2 / (12 + 1);
+    DECLARE sql_query TEXT;
+
+    -- Set up the dynamic SQL for creating the temporary table
+    SET @sql_query := CONCAT(
+        'CREATE TEMPORARY TABLE temp_ema AS ',
+        'SELECT Date, Close, ',
+        '@previous_ema := @previous_ema * (1 - @alpha) + Close * @alpha AS EMA_12 ',
+        'FROM (SELECT Date, Close FROM ', table_name, ' ORDER BY Date) t1'
+    );
+
+    -- Execute the dynamic SQL query
+    SET @alpha := alpha;
+    SET @previous_ema := previous_ema;
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Set up the dynamic SQL for updating the original table
+    SET @sql_query := CONCAT(
+        'UPDATE ', table_name, ' t1 ',
+        'JOIN temp_ema t2 ON t1.Date = t2.Date ',
+        'SET t1.EMA_12 = t2.EMA_12'
+    );
+
+    -- Execute the dynamic SQL query
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Drop the temporary table
+    DROP TEMPORARY TABLE temp_ema;
+END //
+
+DELIMITER ;
+
+-- **************************************************************************
+
+
+drop  PROCEDURE raw_layer.CalculateSignal9;
+DELIMITER //
+
+CREATE PROCEDURE raw_layer.CalculateSignal9(IN table_name VARCHAR(255))
+BEGIN
+    DECLARE previous_signal DOUBLE DEFAULT 0;
+    DECLARE alpha DOUBLE DEFAULT 2 / (9 + 1); -- Smoothing factor for Signal line over 9
+    DECLARE sql_query TEXT;
+
+    -- Set up the dynamic SQL for creating the temporary table
+    SET @sql_query := CONCAT(
+        'CREATE TEMPORARY TABLE temp_signal AS ',
+        'SELECT Date, Close, ',
+        '@previous_signal := @previous_signal * (1 - @alpha) + EMA_12 * @alpha AS Signal_9 ',
+        'FROM (SELECT Date, Close, EMA_12 FROM ', table_name, ' ORDER BY Date) t1'
+    );
+
+    -- Execute the dynamic SQL query
+    SET @alpha := alpha;
+    SET @previous_signal := previous_signal;
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Set up the dynamic SQL for updating the original table
+    SET @sql_query := CONCAT(
+        'UPDATE ', table_name, ' t1 ',
+        'JOIN temp_signal t2 ON t1.Date = t2.Date ',
+        'SET t1.Signal_9 = t2.Signal_9'
+    );
+
+    -- Execute the dynamic SQL query
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Drop the temporary table
+    DROP TEMPORARY TABLE temp_signal;
+END //
+
+DELIMITER ;
+
+
+-- **************************************************************************
+drop  PROCEDURE raw_layer.CalculateEMA26;
+DELIMITER //
+
+CREATE PROCEDURE raw_layer.CalculateEMA26(IN table_name VARCHAR(255))
+BEGIN
+    DECLARE previous_ema DOUBLE DEFAULT 0;
+    DECLARE alpha DOUBLE DEFAULT 2 / (26 + 1); -- Smoothing factor for EMA26
+    DECLARE sql_query TEXT;
+
+    -- Set up the dynamic SQL for creating the temporary table
+    SET @sql_query := CONCAT(
+        'CREATE TEMPORARY TABLE temp_ema AS ',
+        'SELECT Date, Close, ',
+        '@previous_ema := @previous_ema * (1 - @alpha) + Close * @alpha AS EMA_26 ',
+        'FROM (SELECT Date, Close FROM ', table_name, ' ORDER BY Date) t1'
+    );
+
+    -- Execute the dynamic SQL query
+    SET @alpha := alpha;
+    SET @previous_ema := previous_ema;
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Set up the dynamic SQL for updating the original table
+    SET @sql_query := CONCAT(
+        'UPDATE ', table_name, ' t1 ',
+        'JOIN temp_ema t2 ON t1.Date = t2.Date ',
+        'SET t1.EMA_26 = t2.EMA_26'
+    );
+
+    -- Execute the dynamic SQL query
+    PREPARE stmt FROM @sql_query;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    -- Drop the temporary table
+    DROP TEMPORARY TABLE temp_ema;
+END //
+
+DELIMITER ;
+
+-- **************************************************************************
