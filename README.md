@@ -15,8 +15,6 @@ This repository contains the complete workflow for handling stock data, from ini
 10. [Challenges and Solutions](#challenges-and-solutions)
 11. [Future Enhancements](#future-enhancements)
 12. [Contributing](#contributing)
-13. [License](#license)
-14. [Acknowledgments](#acknowledgments)
 
 ## Introduction
 

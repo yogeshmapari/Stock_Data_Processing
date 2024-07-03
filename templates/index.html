@@ -3,92 +3,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Performance Dashboard</title>
+    <title>Interactive Live Stock Website</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to bottom right, #1e5799, #2989d8, #1e5799);
+            color: #fff;
             margin: 0;
             padding: 0;
         }
         .container {
             max-width: 1200px;
-            margin: 20px auto;
+            margin: 0 auto;
             padding: 20px;
-            background-color: #fff;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #fff;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .controls select, .controls input[type="date"], .controls input[type="text"], .controls button {
+            padding: 10px;
+            margin-bottom: 10px;
+            flex: 1;
+            min-width: 200px;
+            margin-right: 10px;
+        }
+        .controls button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+        .chart-container {
+            margin-bottom: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .stock-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        .chart-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .chart-container canvas {
+            max-width: 100%;
+        }
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .options-container label {
+            margin-bottom: 10px;
+            flex-basis: 48%;
+        }
+        .options-container input[type="checkbox"] {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .options-container label span {
+            font-weight: bold;
+        }
+        .comparison-container {
+            margin-top: 20px;
+        }
+        .comparison-container h3 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .comparison-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 10px;
         }
-        .stock-card {
-            padding: 15px;
-            border-radius: 5px;
+        .comparison-list-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
             text-align: center;
-            color: #fff;
-            transition: background-color 0.3s ease;
+            width: 200px;
         }
-        .positive {
-            background-color: #28a745;
+        .comparison-list-item h4 {
+            margin: 5px 0;
+            font-size: 16px;
         }
-        .negative {
-            background-color: #dc3545;
+        .comparison-list-item ul {
+            padding: 0;
+            list-style: none;
+            margin: 10px 0;
         }
-        .neutral {
-            background-color: #6c757d;
+        .comparison-list-item ul li {
+            margin-bottom: 5px;
+        }
+        .comparison-list-item button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .comparison-list-item button:hover {
+            background-color: #0056b3;
+        }
+        .error-message {
+            color: #ff6347;
+            font-style: italic;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Stock Performance Dashboard</h1>
-        <div class="stock-grid" id="stock-grid">
-            <!-- Stock cards will be dynamically added here -->
+        <h1>Interactive Live Stock Website</h1>
+        <div class="controls">
+            <input type="text" id="stock-search" placeholder="Search for a stock...">
+            <label for="stock-select">Select a stock:</label>
+            <select id="stock-select"></select>
+            <label for="start-date">Start Date:</label>
+            <input type="date" id="start-date">
+            <label for="end-date">End Date:</label>
+            <input type="date" id="end-date">
+            <button id="update-chart">Update Chart</button>
+            <button id="download-data">Download Data</button>
+            <button id="add-comparison">Add Comparison</button>
         </div>
+        <div class="options-container">
+            <label><input type="checkbox" class="chart-option" value="close-price" checked> <span>Close Price</span></label>
+            <label><input type="checkbox" class="chart-option" value="volume"> <span>Volume</span></label>
+            <label><input type="checkbox" class="chart-option" value="ma-5"> <span>MA 5 Day</span></label>
+            <label><input type="checkbox" class="chart-option" value="ma-10"> <span>MA 10 Day</span></label>
+            <label><input type="checkbox" class="chart-option" value="rsi"> <span>RSI</span></label>
+            <label><input type="checkbox" class="chart-option" value="macd"> <span>MACD</span></label>
+            <label><input type="checkbox" class="chart-option" value="bollinger-bands"> <span>Bollinger Bands</span></label>
+        </div>
+        <div class="chart-container">
+            <h2>Stock Data</h2>
+            <div id="chart"></div>
+        </div>
+        <div class="comparison-container">
+            <h3>Stock Comparison</h3>
+            <div class="comparison-list" id="comparison-list"></div>
+        </div>
+        <div id="error-message" class="error-message" style="display: none;"></div>
     </div>
 
     <script>
-        // Dummy data (replace with actual data from the database)
-        const stocks = [
-            { symbol: 'AAPL', name: 'Apple Inc.', dailyChange: 1.2 },
-            { symbol: 'GOOGL', name: 'Alphabet Inc.', dailyChange: -0.5 },
-            { symbol: 'MSFT', name: 'Microsoft Corporation', dailyChange: 0.0 },
-            { symbol: 'AMZN', name: 'Amazon.com Inc.', dailyChange: 2.3 },
-            { symbol: 'FB', name: 'Meta Platforms Inc.', dailyChange: -1.1 }
-        ];
+        let stockData = [];
+        let comparisonData = [];
 
-        // Function to create and append stock cards to the grid
-        function renderStockGrid() {
-            const stockGrid = document.getElementById('stock-grid');
-
-            stocks.forEach(stock => {
-                const card = document.createElement('div');
-                card.classList.add('stock-card');
-
-                // Determine color based on daily change
-                if (stock.dailyChange > 0) {
-                    card.classList.add('positive');
-                } else if (stock.dailyChange < 0) {
-                    card.classList.add('negative');
-                } else {
-                    card.classList.add('neutral');
-                }
-
-                card.innerHTML = `
-                    <h2>${stock.symbol}</h2>
-                    <p>${stock.name}</p>
-                    <p>${stock.dailyChange}%</p>
-                `;
-
-                stockGrid.appendChild(card);
+        // Fetch stock list and populate dropdown
+        fetch('/stocks')
+            .then(response => response.json())
+            .then(stocks => {
+                const stockSelect = document.getElementById('stock-select');
+                stocks.forEach(stock => {
+                    const option = document.createElement('option');
+                    option.value = stock;
+                    option.textContent = stock;
+                    stockSelect.appendChild(option);
+                });
+                stockSelect.dispatchEvent(new Event('change'));
+            })
+            .catch(error => {
+                console.error('Error fetching stock list:', error);
+                displayErrorMessage('Failed to fetch stock list. Please try again later.');
             });
+
+        // Fetch stock data and plot
+        document.getElementById('stock-select').addEventListener('change', function() {
+            const selectedStock = this.value;
+            fetch(`/data/${selectedStock}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    stockData = data;
+                    plotChart(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching stock data:', error);
+                    displayErrorMessage('Failed to fetch stock data. Please try again later.');
+                });
+        });
+
+        // Update chart based on selected date range
+        document.getElementById('update-chart').addEventListener('click', function() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const filteredData = stockData.filter(item => {
+                const date = new Date(item.Date);
+                return (!startDate || date >= new Date(startDate)) && (!endDate || date <= new Date(endDate));
+            });
+            plotChart(filteredData);
+        });
+
+        // Download stock data as CSV
+        document.getElementById('download-data').addEventListener('click', function() {
+            const csv = stockData.map(row => Object.values(row).join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'stock_data.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        // Add stock comparison
+        document.getElementById('add-comparison').addEventListener('click', function() {
+            const selectedStock = document.getElementById('stock-select').value;
+            fetch(`/data/${selectedStock}`)
+                .then(response => response.json())
+                .then(data => {
+                    comparisonData.push({ stock: selectedStock, data });
+                    updateComparisonList();
+                })
+                .catch(error => {
+                    console.error('Error fetching stock data:', error);
+                    displayErrorMessage('Failed to fetch comparison data. Please try again later.');
+                });
+        });
+
+        // Search stock
+        document.getElementById('stock-search').addEventListener('input', function() {
+            const searchValue = this.value.toLowerCase();
+            const stockSelect = document.getElementById('stock-select');
+            Array.from(stockSelect.options).forEach(option => {
+                const stockName = option.textContent.toLowerCase();
+                if (stockName.includes(searchValue)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        });
+
+        // Plot chart based on selected options
+        function plotChart(data) {
+            const traces = [];
+
+            if (document.querySelector('input[value="close-price"]').checked) {
+                const closePrice = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.Close),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Close Price'
+                };
+                traces.push(closePrice);
+            }
+
+            if (document.querySelector('input[value="volume"]').checked) {
+                const volume = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.Volume),
+                    type: 'bar',
+                    name: 'Volume'
+                };
+                traces.push(volume);
+            }
+
+            if (document.querySelector('input[value="ma-5"]').checked) {
+                const ma5 = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.MA_5_Day),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'MA 5 Day'
+                };
+                traces.push(ma5);
+            }
+
+            if (document.querySelector('input[value="ma-10"]').checked) {
+                const ma10 = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.MA_10_Day),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'MA 10 Day'
+                };
+                traces.push(ma10);
+            }
+
+            if (document.querySelector('input[value="rsi"]').checked) {
+                const rsi = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.RSI),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'RSI'
+                };
+                traces.push(rsi);
+            }
+
+            if (document.querySelector('input[value="macd"]').checked) {
+                const macd = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.MACD),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'MACD'
+                };
+                traces.push(macd);
+            }
+
+            if (document.querySelector('input[value="bollinger-bands"]').checked) {
+                const upperBand = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.Upper_Band),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Upper Band'
+                };
+                const lowerBand = {
+                    x: data.map(item => item.Date),
+                    y: data.map(item => item.Lower_Band),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Lower Band'
+                };
+                traces.push(upperBand, lowerBand);
+            }
+
+            const layout = {
+                title: 'Stock Data',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' }
+            };
+
+            Plotly.newPlot('chart', traces, layout);
         }
 
-        // Render initial stock grid
-        renderStockGrid();
+        // Update comparison list
+        function updateComparisonList() {
+            const comparisonList = document.getElementById('comparison-list');
+            comparisonList.innerHTML = '';
+            comparisonData.forEach(item => {
+                const listItem = document.createElement('div');
+                listItem.classList.add('comparison-list-item');
+                listItem.innerHTML = `
+                    <h4>${item.stock}</h4>
+                    <ul>
+                        <li>Date Range: ${item.data[0].Date} - ${item.data[item.data.length - 1].Date}</li>
+                        <li>Close Price: ${item.data[item.data.length - 1].Close}</li>
+                    </ul>
+                    <button onclick="removeComparison('${item.stock}')">Remove</button>
+                `;
+                comparisonList.appendChild(listItem);
+            });
+            plotComparisonChart();
+        }
+
+        // Plot comparison chart
+        function plotComparisonChart() {
+            const traces = comparisonData.map(stock => {
+                return {
+                    x: stock.data.map(item => item.Date),
+                    y: stock.data.map(item => item.Close),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: stock.stock
+                };
+            });
+
+            const layout = {
+                title: 'Stock Comparison',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Price' }
+            };
+
+            Plotly.newPlot('chart', traces, layout);
+        }
+
+        // Remove comparison
+        function removeComparison(stock) {
+            comparisonData = comparisonData.filter(item => item.stock !== stock);
+            updateComparisonList();
+        }
+
+        // Display error message
+        function displayErrorMessage(message) {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
     </script>
 </body>
 </html>
