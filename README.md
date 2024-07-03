@@ -25,7 +25,7 @@ The goal of this project is to provide a robust and efficient workflow for proce
 ## Workflow Overview
 
 ![Workflow Overview](images/workflow_overview.png)
-
+<!-- ![Workflow Overview](images/workflow_overview1.png) -->
 1. **Data Acquisition:** Setting up a landing area and using a Python script to automate data ingestion.
 2. **Data Loading into MySQL:** Parsing files, ensuring data integrity, and storing them in MySQL.
 3. **Data Transformation:** Using ETL processes to transform raw data into an intermediate layer.
@@ -38,112 +38,114 @@ The goal of this project is to provide a robust and efficient workflow for proce
    ```bash
    git clone git@github.com:yogeshmapari/Stock_Data_Processing.git
    cd Stock_Data_Processing
+2. **Create a Virtual Environment and Install Dependencies:**
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+3. **Set Up MySQL Database:**
+
+   Install MySQL and create a database for the project.
+   Update the database configuration in config.py.
+   Run the Data Acquisition Script:
+   run below sql code in mysql for all basic database creations
+
+   [MYSQL PRE QUERIES](must_run_queries.sql.txt)
 
 
+   ```bash
+   python data_acquisition.py
+4. **Run the Data Loading Script:**
+    ```bash
+   python file_based_trigger.py
+5. **Run the Data Transformation Script:**
 
+    ```bash
+   python modify_tables_tranformatin.py
+6. **Run the Flask Application:**
 
+    ```bash
+   flask run
 
-Create a Virtual Environment and Install Dependencies:
+## Data Acquisition
 
- ```bash
-Copy code
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-Set Up MySQL Database:
+### Landing Area Setup:
+Establish a dedicated area for incoming stock data files. we called it as landing area.
+folder name= landing_area
 
-Install MySQL and create a database for the project.
-Update the database configuration in config.py.
-Run the Data Acquisition Script:
-
- ```bash
-Copy code
-python data_acquisition.py
-Run the Data Loading Script:
-
- ```bash
-Copy code
-python data_loading.py
-Run the Data Transformation Script:
-
- ```bash
-Copy code
-python data_transformation.py
-Run the Flask Application:
-
- ```bash
-Copy code
-flask run
-Data Acquisition
-
-Landing Area Setup:
-Establish a dedicated area for incoming stock data files.
-
-Automation Script:
+### Automation Script:
 A Python script monitors this area for new files and triggers the data loading process.
+we have [file_based_trigger.py ](file_based_trigger.py) file that will check the folder if any new files are their it will load them in mysql raw layer as table.
 
-Data Loading into MySQL
+## Data Loading into MySQL
 
-Python Script for Loading:
+### Python Script for Loading:
 Processes incoming files and loads them into MySQL.
+we have design the python file i.e [raw_load.py ](raw_load.py) for the loading file data to mysql.
 
-File Parsing and Data Integrity:
+### File Parsing and Data Integrity:
 Ensures data is correctly parsed and validated before insertion.
+### Archival Area Setup:
+we will move files to archival area once we are done with the data loading. may or may nor due to some issue we got data corrption we will load the file again by accessing it from archival area. 
 
-Data Transformation
+folder name= archive_area
 
-Python Script for Transformation:
+## Data Transformation
+
+### Python Script for Transformation:
 Transforms raw data into an intermediate layer.
+i.e we are doing some calculation on base data we recived as 
 
-ETL Process:
+New colunms added are ----> Daily_Return,  MA_5_Day, MA_10_Day, Volatility, RSI, MACD, Signal_9, Upper_Band, Lower_Band, Gain, Loss, AvgGain, AvgLoss, EMA_12, EMA_26, MA_20, SD_20
+
+### ETL Process:
 Extracts, transforms, and loads data to prepare it for analysis.
 
-Visualization with Flask
-
-Introduction to Flask:
+## Visualization with Flask
+![Web Overview](images/web_page.png)
+### Introduction to Flask:
 A lightweight framework for building web applications.
 
-Integration with MySQL:
+### Integration with MySQL:
 Retrieves transformed data and renders it dynamically using Jinja templates.
+we get the data for all the stock and will make them avilable on webpage for analysis.
 
-Designing the Web Interface
+## Designing the Web Interface
 
-Web Page Creation:
+### Web Page Creation:
 Features interactive charts and tables for data exploration.
 
-User Interaction:
+### User Interaction:
 Responsive design ensures accessibility across devices.
 
-Example Use Case
 
-Scenario:
-Demonstrates the workflow in a real-world context, showcasing its business impact.
+## Challenges and Solutions
 
-Challenges and Solutions
+### Challenges:
+- Data variability
+- Performance
+- Integration
 
-Challenges:
+### Solutions:
+- Data quality checks
+- Optimization techniques
+- Continuous improvement
 
-Data variability
-Performance
-Integration
-Solutions:
+## Future Enhancements
+- we will try to impliment live batch processing on local device
+- we will try to my scraping for the stock data from internet.
+- will add airflow based batch processing.
 
-Data quality checks
-Optimization techniques
-Continuous improvement
-Future Enhancements
-
-Advanced Analytics:
+### Advanced Analytics:
 Incorporate machine learning for predictive analysis.
 
-Real-Time Processing:
+### Real-Time Processing:
 Enable real-time data streaming and analysis.
 
-User Feedback:
+### User Feedback:
 Iterate based on user interaction and requirements.
 
-Contributing
-Contributions are welcome! Please submit a pull request or open an issue to discuss your ideas.
 
-License
-This project is licensed under the MIT License.
+### CONTRIBUTION:
+## Yogesh Mapari  patilmapari@gmail.com
